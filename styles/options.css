@@ -1,0 +1,184 @@
+@import "tailwindcss";
+@import "./viewer-theme.css";
+@import "./viewer.css";
+@import "./header.css";
+@source "../options.html";
+@source "../src/options.ts";
+
+:root {
+  color-scheme: light;
+  --options-bg: #f4f4f0;
+  --options-surface: #ffffff;
+  --options-border: #deded6;
+  --options-text: #272822;
+  --options-muted: #6f7068;
+  --options-accent: #d91f4e;
+  --options-accent-soft: rgba(249, 38, 114, 0.1);
+  font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+:root[data-jf-theme="dark"] {
+  color-scheme: dark;
+  --options-bg: #1e1f1c;
+  --options-surface: #272822;
+  --options-border: #49483e;
+  --options-text: #f8f8f2;
+  --options-muted: #a9a99d;
+  --options-accent: #f92672;
+  --options-accent-soft: rgba(249, 38, 114, 0.14);
+}
+
+* {
+  @apply box-border;
+}
+
+body {
+  @apply m-0 min-h-screen;
+  background: var(--options-bg);
+  color: var(--options-text);
+}
+
+.options-shell {
+  margin: 0 auto;
+  max-width: 760px;
+  padding: 32px 24px 80px;
+}
+
+.settings-heading h2,
+.settings-heading p {
+  margin: 0;
+}
+
+.settings-heading p {
+  color: var(--options-muted);
+  font-size: 13px;
+  margin-top: 3px;
+}
+
+.settings-card {
+  background: var(--options-surface);
+  border: 1px solid var(--options-border);
+  border-radius: 16px;
+  box-shadow: 0 18px 55px rgba(39, 40, 34, 0.08);
+  padding: 26px;
+}
+
+.settings-heading {
+  @apply flex items-start justify-between;
+  margin-bottom: 23px;
+}
+
+.settings-heading h2 {
+  font-size: 16px;
+}
+
+.settings-status {
+  color: var(--options-accent);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.theme-options {
+  @apply grid border-0 p-0;
+  gap: 10px;
+  margin: 0;
+}
+
+.theme-options legend {
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 9px;
+}
+
+.theme-option {
+  @apply flex cursor-pointer items-center;
+  border: 1px solid var(--options-border);
+  border-radius: 10px;
+  gap: 12px;
+  min-height: 64px;
+  padding: 11px 14px;
+}
+
+.theme-option:has(input:checked) {
+  background: var(--options-accent-soft);
+  border-color: var(--options-accent);
+}
+
+.theme-option input {
+  accent-color: var(--options-accent);
+  height: 17px;
+  margin: 0;
+  width: 17px;
+}
+
+.theme-option-content strong,
+.theme-option-content small {
+  @apply block;
+}
+
+.theme-option-content strong {
+  font-size: 13px;
+}
+
+.theme-option-content small {
+  color: var(--options-muted);
+  font-size: 11px;
+  margin-top: 3px;
+}
+
+.theme-preview {
+  @apply overflow-hidden;
+  background: #272822;
+  border: 1px solid #49483e;
+  border-radius: 12px;
+  margin-top: 24px;
+}
+
+.preview-label {
+  border-bottom: 1px solid #49483e;
+  color: #a9a99d;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 9px 13px;
+  text-transform: uppercase;
+}
+
+.theme-preview pre {
+  color: #f8f8f2;
+  font: 12px/1.7 var(--jf-font-mono);
+  margin: 0;
+  padding: 16px;
+}
+
+.theme-preview .jf-key {
+  color: #f92672;
+}
+
+.theme-preview .jf-string {
+  color: #e6db74;
+}
+
+.theme-preview .jf-number {
+  color: #fd971f;
+}
+
+.theme-preview .jf-boolean {
+  color: #66d9ef;
+}
+
+.theme-preview .jf-bracket,
+.theme-preview .jf-colon,
+.theme-preview .jf-punctuation {
+  color: #f8f8f2;
+}
+
+@media (max-width: 560px) {
+  .options-shell {
+    padding: 30px 16px 50px;
+  }
+
+  .settings-card {
+    padding: 20px;
+  }
+}

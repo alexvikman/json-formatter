@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>JSON Formatter</title>
+    <link rel="stylesheet" href="styles/formatter.css">
+  </head>
+  <body>
+    <main class="formatter-shell">
+      <header class="jf-app-header">
+        <div class="jf-brand">
+          <div class="jf-brand-mark" aria-hidden="true">{ }</div>
+          <div>
+            <h1 class="jf-brand-title">JSON Formatter</h1>
+            <p class="jf-brand-subtitle">Paste, format, and explore</p>
+          </div>
+        </div>
+        <button id="settings-button" class="jf-header-button" type="button">Settings</button>
+      </header>
+
+      <section id="editor-view" class="editor-view" aria-labelledby="editor-title">
+        <div class="section-heading">
+          <div>
+            <h2 id="editor-title">Paste JSON</h2>
+            <p>Everything stays in your browser.</p>
+          </div>
+          <button id="clear-button" class="text-button" type="button">Clear</button>
+        </div>
+
+        <label class="sr-only" for="json-input">JSON to format</label>
+        <textarea
+          id="json-input"
+          spellcheck="false"
+          autocapitalize="off"
+          autocomplete="off"
+          placeholder='{"name": "Example", "active": true, "values": [1, 2, 3]}'
+        ></textarea>
+
+        <div id="parse-error" class="parse-error" role="alert" aria-live="polite" hidden></div>
+
+        <div class="editor-footer">
+          <span class="keyboard-hint"><kbd>Ctrl</kbd><span>+</span><kbd>Enter</kbd></span>
+          <button id="format-button" class="primary-button" type="button">Format JSON</button>
+        </div>
+      </section>
+
+      <section id="result-view" class="result-view" aria-labelledby="result-title" hidden>
+        <div class="result-toolbar">
+          <button id="edit-button" class="icon-text-button" type="button" aria-label="Back to editor">
+            <span aria-hidden="true">←</span>
+            Edit
+          </button>
+          <div class="result-info">
+            <h2 id="result-title">Formatted JSON</h2>
+            <p id="result-meta"></p>
+          </div>
+          <button id="copy-button" class="primary-button compact" type="button">Copy formatted</button>
+        </div>
+
+        <div class="tree-toolbar" aria-label="View options">
+          <div class="view-switch" role="group" aria-label="JSON view">
+            <button id="tree-mode-button" class="view-mode-button is-active" type="button" aria-pressed="true">Tree</button>
+            <button id="raw-mode-button" class="view-mode-button" type="button" aria-pressed="false">Raw</button>
+          </div>
+          <span class="toolbar-divider" aria-hidden="true"></span>
+          <div id="tree-controls" class="tree-controls">
+            <button id="collapse-button" class="text-button" type="button">Collapse all</button>
+            <span class="toolbar-divider" aria-hidden="true"></span>
+            <button id="expand-button" class="text-button" type="button">Expand all</button>
+          </div>
+          <span id="copy-status" class="copy-status" role="status" aria-live="polite"></span>
+        </div>
+
+        <div id="json-result" class="json-result"></div>
+        <pre id="json-raw-result" class="json-result raw-result" aria-label="Raw JSON" hidden></pre>
+      </section>
+    </main>
+
+    <script src="scripts/theme.js"></script>
+    <script src="scripts/json-renderer.js"></script>
+    <script src="scripts/formatter.js"></script>
+  </body>
+</html>

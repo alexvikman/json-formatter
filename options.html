@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>JSON Formatter Settings</title>
+    <link rel="stylesheet" href="styles/options.css">
+  </head>
+  <body>
+    <header class="jf-app-header">
+      <div class="jf-brand">
+        <div class="jf-brand-mark" aria-hidden="true">{ }</div>
+        <div>
+          <h1 class="jf-brand-title">JSON Formatter</h1>
+          <p class="jf-brand-subtitle">Settings</p>
+        </div>
+      </div>
+    </header>
+
+    <main class="options-shell">
+      <section class="settings-card" aria-labelledby="appearance-title">
+        <div class="settings-heading">
+          <div>
+            <h2 id="appearance-title">Appearance</h2>
+            <p>Choose how the formatter looks in the formatter tab and on JSON response pages.</p>
+          </div>
+          <span id="settings-status" class="settings-status" role="status" aria-live="polite"></span>
+        </div>
+
+        <fieldset class="theme-options">
+          <legend>Theme</legend>
+          <label class="theme-option">
+            <input type="radio" name="theme" value="system">
+            <span class="theme-option-content">
+              <strong>System</strong>
+              <small>Follow your operating system setting</small>
+            </span>
+          </label>
+          <label class="theme-option">
+            <input type="radio" name="theme" value="light">
+            <span class="theme-option-content">
+              <strong>Light</strong>
+              <small>Always use the light theme</small>
+            </span>
+          </label>
+          <label class="theme-option">
+            <input type="radio" name="theme" value="dark">
+            <span class="theme-option-content">
+              <strong>Dark</strong>
+              <small>Always use the Monokai dark theme</small>
+            </span>
+          </label>
+        </fieldset>
+
+        <div class="theme-preview" aria-label="Theme preview">
+          <div class="preview-label">Preview</div>
+          <pre><code><span class="jf-bracket">{</span>
+  <span class="jf-key">"theme"</span><span class="jf-colon">: </span><span class="jf-string">"monokai"</span><span class="jf-punctuation">,</span>
+  <span class="jf-key">"enabled"</span><span class="jf-colon">: </span><span class="jf-boolean">true</span><span class="jf-punctuation">,</span>
+  <span class="jf-key">"level"</span><span class="jf-colon">: </span><span class="jf-number">42</span>
+<span class="jf-bracket">}</span></code></pre>
+        </div>
+      </section>
+    </main>
+
+    <script src="scripts/theme.js"></script>
+    <script src="scripts/options.js"></script>
+  </body>
+</html>

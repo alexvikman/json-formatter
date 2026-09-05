@@ -1,0 +1,16 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "lib": [
+      "ES2022"
+    ],
+    "types": [
+      "bun",
+      "node"
+    ]
+  },
+  "include": [
+    "task/**/*.ts",
+    "task/**/*.mts"
+  ]
+}

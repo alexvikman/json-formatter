@@ -1,0 +1,31 @@
+# Dependencies and local caches
+node_modules/
+.pnpm-store/
+
+# Generated extension, test output, and reports
+dist/
+.build/
+.test-dist/
+.performance-test-dist/
+.performance/
+coverage/
+*.tsbuildinfo
+*.log
+
+# Local configuration and credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Packaged releases belong in release assets, not source control
+*.zip
+*.crx
+
+# Editor and operating-system files
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+Desktop.ini

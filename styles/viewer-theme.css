@@ -1,0 +1,32 @@
+:root {
+  color-scheme: light;
+  --jf-font-mono: "Cascadia Code", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  --jf-text: #272822;
+  --jf-muted: #76776d;
+  --jf-guide: #deded5;
+  --jf-hover: rgba(249, 38, 114, 0.06);
+  --jf-key: #c4144b;
+  --jf-string: #6f7600;
+  --jf-number: #c24d00;
+  --jf-boolean: #007b8a;
+  --jf-null: #6f7068;
+  --jf-bracket: #272822;
+  --jf-summary-bg: #ecece5;
+  --jf-summary-text: #696a62;
+}
+
+:root[data-jf-theme="dark"] {
+  color-scheme: dark;
+  --jf-text: #f8f8f2;
+  --jf-muted: #8f8f82;
+  --jf-guide: #49483e;
+  --jf-hover: rgba(249, 38, 114, 0.1);
+  --jf-key: #f92672;
+  --jf-string: #e6db74;
+  --jf-number: #fd971f;
+  --jf-boolean: #66d9ef;
+  --jf-null: #a9a99d;
+  --jf-bracket: #f8f8f2;
+  --jf-summary-bg: #3e3d32;
+  --jf-summary-text: #cfcfc2;
+}

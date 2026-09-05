@@ -1,0 +1,6 @@
+# Keep source files consistent across Windows, macOS, and Linux.
+* text=auto eol=lf
+
+# These fixtures have byte-for-byte checksums; never convert their line endings.
+tests/fixtures/*.json -text
+tests/fixtures/microsoft-5MB.json -diff

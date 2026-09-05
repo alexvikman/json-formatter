@@ -1,0 +1,181 @@
+.jf-tree {
+  @apply box-border;
+  color: var(--jf-text);
+  font-family: var(--jf-font-mono);
+  font-size: 13px;
+  line-height: 1.65;
+  min-width: max-content;
+  tab-size: 2;
+}
+
+.jf-raw-code {
+  display: block;
+  color: inherit;
+  font: inherit;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  min-width: 0;
+  width: 100%;
+}
+
+.jf-raw-code:focus-visible {
+  outline: 1px solid var(--jf-muted);
+  outline-offset: 3px;
+}
+
+.jf-raw-chunk {
+  display: block;
+  content-visibility: auto;
+  contain-intrinsic-block-size: auto 80em;
+}
+
+.jf-tree *,
+.jf-tree *::before,
+.jf-tree *::after {
+  @apply box-border;
+}
+
+.jf-line {
+  @apply block whitespace-nowrap;
+  border-radius: 5px;
+  height: 22px;
+  padding: 0 6px 0 21px;
+}
+
+.jf-container-line {
+  padding-left: 2px;
+}
+
+.jf-line:hover {
+  background: var(--jf-hover);
+}
+
+.jf-children {
+  border-left: 1px solid var(--jf-guide);
+  margin-left: 9px;
+  padding-left: 13px;
+}
+
+.jf-render-chunk {
+  content-visibility: auto;
+}
+
+.jf-container-node.is-collapsed > .jf-children,
+.jf-container-node.is-collapsed > .jf-closing-line {
+  display: none;
+}
+
+.jf-container-node:not(.is-collapsed) > .jf-container-line .jf-inline-tail {
+  display: none;
+}
+
+.jf-toggle {
+  height: 18px;
+  margin-right: 1px;
+  width: 18px;
+}
+
+.jf-toggle {
+  @apply inline-flex cursor-pointer items-center justify-center bg-transparent p-0;
+  appearance: none;
+  border: 0;
+  border-radius: 4px;
+  color: var(--jf-muted);
+  vertical-align: -4px;
+}
+
+.jf-toggle:hover,
+.jf-toggle:focus-visible {
+  background: var(--jf-guide);
+  color: var(--jf-text);
+  outline: none;
+}
+
+.jf-toggle::after {
+  content: "";
+  border-bottom: 1.5px solid currentColor;
+  border-right: 1.5px solid currentColor;
+  display: block;
+  height: 6px;
+  transform: rotate(45deg) translate(-1px, -1px);
+  transition: transform 120ms ease;
+  width: 6px;
+}
+
+.jf-container-node.is-collapsed > .jf-container-line .jf-toggle::after {
+  transform: rotate(-45deg) translate(-1px, 1px);
+}
+
+.jf-key {
+  color: var(--jf-key);
+  font-weight: 600;
+}
+
+.jf-colon,
+.jf-punctuation,
+.jf-bracket {
+  color: var(--jf-bracket);
+}
+
+.jf-colon {
+  margin-right: 0.45ch;
+}
+
+.jf-string {
+  color: var(--jf-string);
+}
+
+.jf-link,
+.jf-link:visited {
+  color: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+  user-select: text;
+}
+
+.jf-link:hover {
+  text-decoration-thickness: 2px;
+}
+
+.jf-link:focus-visible {
+  border-radius: 2px;
+  outline: 1px solid currentColor;
+  outline-offset: 2px;
+}
+
+.jf-number {
+  color: var(--jf-number);
+}
+
+.jf-boolean {
+  color: var(--jf-boolean);
+  font-weight: 600;
+}
+
+.jf-null {
+  color: var(--jf-null);
+  font-style: italic;
+}
+
+.jf-inline-tail {
+  @apply inline-flex items-baseline;
+}
+
+.jf-summary {
+  background: var(--jf-summary-bg);
+  border-radius: 999px;
+  color: var(--jf-summary-text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 10px;
+  line-height: 17px;
+  margin: 0 6px;
+  padding: 0 7px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .jf-toggle::after {
+    transition: none;
+  }
+}
