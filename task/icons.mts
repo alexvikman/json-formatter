@@ -2,9 +2,9 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { chromium } from "playwright-core";
 
-// PNGs are checked in; run `pnpm icons` after editing assets/icon.svg.
+// PNGs are checked in; run `pnpm icons` after editing src/assets/icon.svg.
 // Ordinary builds only copy the assets and do not need a browser.
-const assetsDirectory = path.resolve(import.meta.dirname, "..", "assets");
+const assetsDirectory = path.resolve(import.meta.dirname, "..", "src", "assets");
 const source = await readFile(path.join(assetsDirectory, "icon.svg"), "utf8");
 const browser = await chromium.launch({
   channel: "chrome",

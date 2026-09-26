@@ -3,12 +3,9 @@ import path from "node:path";
 import { buildExtension } from "./build";
 
 const projectRoot = path.resolve(import.meta.dir, "..");
-const watchedDirectories = ["assets", "src", "styles", "task", "tests"];
+const watchedDirectories = ["src", "task", "tests"];
 const watchedFiles = [
   "LICENSE",
-  "manifest.json",
-  "formatter.html",
-  "options.html",
   "package.json",
   "tsconfig.json",
   "tsconfig.tasks.json",

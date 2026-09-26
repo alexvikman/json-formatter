@@ -1,4 +1,4 @@
-<img src="assets/icon-128.png" alt="JSON Formatter icon" width="64" height="64">
+<img src="src/assets/icon-128.png" alt="JSON Formatter icon" width="64" height="64">
 
 # JSON Formatter for Chrome
 
@@ -36,6 +36,8 @@ Hold **Ctrl** (**Cmd** on Mac) while collapsing an object or array to collapse i
 ## Development
 
 Built with TypeScript, Bun, and Tailwind CSS.
+
+Extension source files live in `src/`: the manifest and HTML pages, with TypeScript in `scripts/`, CSS in `styles/`, and icons in `assets/`. Build tools live in `task/` and browser tests in `tests/`.
 
 ```sh
 pnpm run watch             # Rebuild on source changes

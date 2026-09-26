@@ -3,7 +3,7 @@
 @import "./viewer.css";
 @import "./header.css";
 @source "../options.html";
-@source "../src/options.ts";
+@source "../scripts/options.ts";
 
 :root {
   color-scheme: light;

@@ -11,7 +11,7 @@
     "strict": false
   },
   "include": [
-    "src/globals.d.ts",
+    "src/scripts/globals.d.ts",
     "tests/**/*.ts"
   ]
 }

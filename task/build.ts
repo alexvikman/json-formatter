@@ -44,6 +44,8 @@ interface OutputFile {
 }
 
 const projectRoot = path.resolve(import.meta.dir, "..");
+const sourceRoot = path.join(projectRoot, "src");
+const scriptsRoot = path.join(sourceRoot, "scripts");
 const buildRoot = path.join(projectRoot, ".build");
 const stageRoot = path.join(buildRoot, "extension");
 const distRoot = path.join(projectRoot, "dist");
@@ -63,10 +65,10 @@ const scriptEntries = [
   "page-formatter.ts",
   "formatter.ts",
   "options.ts"
-].map((fileName) => path.join(projectRoot, "src", fileName));
+].map((fileName) => path.join(scriptsRoot, fileName));
 
 const styleEntries = ["formatter.css", "options.css", "page.css"];
-const staticFiles = ["manifest.json", "formatter.html", "options.html", "LICENSE"];
+const staticFiles = ["manifest.json", "formatter.html", "options.html"];
 
 function assertProjectPath(targetPath: string): void {
   const relativePath = path.relative(projectRoot, path.resolve(targetPath));
@@ -103,7 +105,7 @@ async function bundleScripts(development: boolean): Promise<void> {
   await mkdir(outputDirectory, { recursive: true });
   const result = await Bun.build({
     entrypoints: scriptEntries,
-    root: path.join(projectRoot, "src"),
+    root: scriptsRoot,
     outdir: outputDirectory,
     target: "browser",
     format: "iife",
@@ -128,7 +130,7 @@ async function compileStyles(development: boolean): Promise<void> {
       nodeExecutable,
       tailwindCli,
       "-i",
-      path.join(projectRoot, "styles", fileName),
+      path.join(sourceRoot, "styles", fileName),
       "-o",
       path.join(outputDirectory, fileName)
     ];
@@ -141,10 +143,11 @@ async function compileStyles(development: boolean): Promise<void> {
 
 async function copyStaticFiles(development: boolean): Promise<void> {
   for (const fileName of staticFiles) {
-    await cp(path.join(projectRoot, fileName), path.join(stageRoot, fileName));
+    await cp(path.join(sourceRoot, fileName), path.join(stageRoot, fileName));
   }
+  await cp(path.join(projectRoot, "LICENSE"), path.join(stageRoot, "LICENSE"));
 
-  const assetsDirectory = path.join(projectRoot, "assets");
+  const assetsDirectory = path.join(sourceRoot, "assets");
   if (await pathExists(assetsDirectory)) {
     await cp(assetsDirectory, path.join(stageRoot, "assets"), { recursive: true });
   }
@@ -192,7 +195,7 @@ async function validateOutput(): Promise<void> {
     throw new Error("The built manifest must use Manifest V3.");
   }
 
-  const referencedFiles = new Set<string>(staticFiles);
+  const referencedFiles = new Set<string>([...staticFiles, "LICENSE"]);
   for (const fileName of [
     ...Object.values(manifest.icons ?? {}),
     ...Object.values(manifest.action?.default_icon ?? {})

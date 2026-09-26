@@ -3,7 +3,7 @@
 @import "./viewer.css";
 @import "./header.css";
 @source "../formatter.html";
-@source "../src/formatter.ts";
+@source "../scripts/formatter.ts";
 
 :root {
   color-scheme: light;
