@@ -47,6 +47,17 @@ Reload the extension in Chrome after rebuilding. Build output is written to `dis
 
 Tests use an installed Chrome browser. Set `JF_CHROME_PATH` for a custom installation. The performance test uses the [local fixtures](tests/fixtures/README.md) and saves results to `.performance/results.json`.
 
+## Packaging
+
+```sh
+pnpm run package
+```
+
+Builds a signed `.crx` and a `.zip` in `release/`.
+The first local run creates `.keys/json-formatter.pem`; later runs reuse it.
+Back up this private key and never publish it: it preserves the extension's identity across updates.
+To use an existing key, set `JF_SIGNING_KEY_PATH` to its PEM file.
+
 ## License
 
 [MIT](LICENSE).

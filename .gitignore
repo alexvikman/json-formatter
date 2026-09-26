@@ -4,6 +4,7 @@ node_modules/
 
 # Generated extension, test output, and reports
 dist/
+release/
 .build/
 .test-dist/
 .performance-test-dist/
@@ -13,6 +14,7 @@ coverage/
 *.log
 
 # Local configuration and credentials
+.keys/
 .env
 .env.*
 !.env.example

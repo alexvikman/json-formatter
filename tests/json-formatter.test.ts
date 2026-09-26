@@ -17,6 +17,7 @@ const { verifyAppearance } = require("./appearance.test");
 const { verifyDataIntegrity } = require("./data-integrity.test");
 const { verifyLinks } = require("./links.test");
 const { verifySiblingCollapse } = require("./sibling-collapse.test");
+const { verifyPackaging } = require("./package.test");
 
 function loadPlaywright() {
   try {
@@ -50,6 +51,7 @@ async function run() {
   const { chromium } = loadPlaywright();
   const projectRoot = process.cwd();
   const extensionRoot = path.join(projectRoot, "dist");
+  await verifyPackaging(extensionRoot);
   const sample = JSON.stringify({
     name: "Test",
     active: true,
