@@ -24,7 +24,7 @@
   const clearButton = document.getElementById("clear-button") as HTMLButtonElement;
 
   let parsedValue: JsonValue = null;
-  let compactJson = "";
+  let compactJson: string | undefined;
   let activeTree: JsonTree | null = null;
   let viewMode: "tree" | "raw" = "tree";
   let statusTimer: number | undefined;
@@ -88,7 +88,7 @@
 
   async function copyCurrentJson(): Promise<void> {
     const text = viewMode === "raw"
-      ? compactJson
+      ? (compactJson ??= JSON.stringify(parsedValue))
       : JSON.stringify(parsedValue, null, 2);
     try {
       await copyText(text);
@@ -104,7 +104,7 @@
     resultContainer.hidden = showRaw;
     rawResultContainer.hidden = !showRaw;
     if (showRaw && !rawResultContainer.firstChild) {
-      rawResultContainer.appendChild(rendererApi.renderRaw(compactJson));
+      rawResultContainer.appendChild(rendererApi.renderRaw(compactJson ??= JSON.stringify(parsedValue)));
     }
     treeControls.hidden = showRaw;
     treeModeButton.classList.toggle("is-active", !showRaw);
@@ -133,7 +133,7 @@
     }
 
     clearError();
-    compactJson = JSON.stringify(parsedValue);
+    compactJson = undefined;
     activeTree = rendererApi.render(parsedValue);
     resultContainer.replaceChildren(activeTree.element);
     rawResultContainer.replaceChildren();

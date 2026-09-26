@@ -79,7 +79,7 @@
   } catch (_error) {
     return;
   }
-  const compactJson = JSON.stringify(parsedJson);
+  let compactJson: string | undefined;
   window.JsonFormatterTheme.connect(document.documentElement);
 
   const app = document.createElement("div");
@@ -143,7 +143,7 @@
     tree.element.hidden = showRaw;
     rawView.hidden = !showRaw;
     if (showRaw && !rawView.firstChild) {
-      rawView.appendChild(rendererApi.renderRaw(compactJson));
+      rawView.appendChild(rendererApi.renderRaw(compactJson ??= JSON.stringify(parsedJson)));
     }
     collapseButton.hidden = showRaw;
     expandButton.hidden = showRaw;
@@ -161,7 +161,8 @@
   expandButton.addEventListener("click", () => tree.expandAll());
   copyButton.addEventListener("click", async () => {
     try {
-      const text = viewMode === "raw" ? compactJson : JSON.stringify(parsedJson, null, 2);
+      const text = viewMode === "raw"
+        ? (compactJson ??= JSON.stringify(parsedJson)) : JSON.stringify(parsedJson, null, 2);
       await copyText(text);
       copyStatus.textContent = viewMode === "raw" ? "Raw JSON copied" : "Formatted JSON copied";
       copyButton.textContent = "Copied!";

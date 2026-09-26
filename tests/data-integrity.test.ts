@@ -176,6 +176,24 @@ export async function verifyDataIntegrity(browser: Browser, extensionRoot: strin
     assert.equal(checks.duplicateKey, '{"id":9007199254740993}');
     assert.equal(checks.giantInteger, "9".repeat(1_000));
 
+    const numberScanning = await page.evaluate(() => {
+      const api = window.JsonFormatterRenderer;
+      const strings = ['"42"', "\\", '\\"', "\\\\", "\n\t", "漢字 😀", "9".repeat(65_536)];
+      return strings.flatMap((text) => ["42", "-0", "9007199254740993", "1e400", "1.2300e+04"].map((number) => {
+        const key = JSON.stringify(text);
+        const source = `{${key}:${key},"number":${number}}`;
+        return JSON.stringify(api.parse(source)) === source;
+      }));
+    });
+    assert(numberScanning.every(Boolean), "Escaped quotes, backslashes and digits in strings must not hide later exact number tokens.");
+    const byteCounts = await page.evaluate(() => {
+      const api = window.JsonFormatterRenderer;
+      return ["ASCII", "café", "漢字", "😀", "\ud800"].map((source) => ({
+        actual: api.formatBytes(source), expected: `${new Blob([source]).size} B`
+      }));
+    });
+    assert(byteCounts.every(({ actual, expected }) => actual === expected), "Size labels must count UTF-8 bytes, including surrogate replacement.");
+
     // Lazily built folded trees must copy correctly even without descendant DOM.
     await page.locator("#tree-mode-button").click();
     await page.locator("#json-result").evaluate((container, source) => {

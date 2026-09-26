@@ -101,6 +101,23 @@ export async function verifyLargeDocument(browser: Browser, extensionRoot: strin
     assert.equal(await page.locator(".jf-raw-code").count(), 0, "Editing must invalidate cached Raw.");
     await page.locator("#raw-mode-button").click();
     assert.equal(await page.locator(".jf-raw-code").textContent(), JSON.stringify(replacement));
+
+    const mixedRecords = Array.from({ length: 24 }, (_unused, index) => ({
+      'key "\\ <img>': index % 2 ? true : index,
+      value: index % 3 === 0 ? `https://example.com/${index}?a=1&b=2`
+        : index % 3 === 1 ? `Plain text ${index} <img src=x onerror=alert(1)>` : null
+    }));
+    await page.locator("#edit-button").click();
+    await page.locator("#json-input").fill(JSON.stringify(mixedRecords));
+    await page.locator("#format-button").click();
+    assert.equal(await copyWholeTree(), JSON.stringify(mixedRecords, null, 2),
+      "Reused record templates must preserve each value, key, type and trailing comma.");
+    assert.equal(await page.locator(".jf-tree .jf-link").count(), 8);
+    assert.equal(await page.locator(".jf-tree .jf-null").count(), 8);
+    assert.equal(await page.locator(".jf-tree img").count(), 0);
+    await page.locator("#collapse-button").click();
+    await page.locator("#expand-button").click();
+    assert.equal(await copyWholeTree(), JSON.stringify(mixedRecords, null, 2));
     console.log("Large-document tests passed: offscreen copying/search, scrolling, collapsing, safe coloring and Raw reuse.");
   } finally {
     await page.close();

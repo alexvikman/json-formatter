@@ -9,9 +9,51 @@
     isRawJSON(value: unknown): value is JsonNumber;
   };
 
+  function needsNumberSources(source: string): boolean {
+    for (let position = 0; position < source.length; position += 1) {
+      const character = source.charCodeAt(position);
+      if (character === 34) {
+        // Skip string contents, including escaped quotes, without tokenizing
+        // large strings or mistaking a digit in a key/value for a JSON number.
+        while (true) {
+          const end = source.indexOf('"', position + 1);
+          if (end === -1) {
+            return false; // JSON.parse still validates the entire document.
+          }
+          let slash = end - 1;
+          while (source.charCodeAt(slash) === 92) {
+            slash -= 1;
+          }
+          position = end;
+          if ((end - slash) % 2 === 1) {
+            break;
+          }
+        }
+      } else if (character === 45 || (character >= 48 && character <= 57)) {
+        const start = position;
+        let next: number;
+        do {
+          next = source.charCodeAt(++position);
+        } while ((next >= 48 && next <= 57) || next === 46 || next === 69 || next === 101 ||
+          next === 43 || next === 45);
+        const token = source.slice(start, position);
+        if (String(Number(token)) !== token) {
+          return true;
+        }
+        position -= 1;
+      }
+    }
+    return false;
+  }
+
   function parse(source: string): JsonValue {
     if (typeof sourceJson.rawJSON !== "function") {
       throw new Error("Update Chrome to preserve JSON numbers without losing precision.");
+    }
+    // Avoid a reviver call and source context for every property when all
+    // number tokens already survive the ordinary parser/stringifier exactly.
+    if (!needsNumberSources(source)) {
+      return JSON.parse(source) as JsonValue;
     }
     return sourceJson.parse(source, (_key, value, context) => {
       if (typeof value !== "number") {
@@ -53,11 +95,20 @@
     closingLine: HTMLDivElement;
     toggle: HTMLButtonElement;
     children: HTMLDivElement;
-    entries: ContainerEntry[];
     childrenBuilt: boolean;
     expanded: boolean;
+    openingText: string;
     closingText: string;
     inlineTail?: HTMLSpanElement;
+  }
+
+  interface FlatTemplate {
+    node: HTMLDivElement;
+    key: string | null;
+    opening: string;
+    isLast: boolean;
+    keys: Array<string | null>;
+    classes: string[];
   }
 
   function createElement<K extends keyof HTMLElementTagNameMap>(
@@ -195,7 +246,7 @@
   function formatBytes(source: string | number): string {
     const bytes = typeof source === "number"
       ? Math.max(0, source)
-      : new Blob([String(source)]).size;
+      : new TextEncoder().encode(String(source)).byteLength;
     if (bytes < 1000) {
       return `${bytes} B`;
     }
@@ -335,12 +386,18 @@
     options: { expandedDepth: number };
     containerStates: ContainerState[];
     element: HTMLDivElement;
-    copyMetadata = new WeakMap<HTMLElement, { depth: number; text: string }>();
-    statesByToggle = new WeakMap<Element, ContainerState>();
-    statesByLine = new WeakMap<HTMLElement, ContainerState>();
-    nodeRows = new WeakMap<HTMLElement, number>();
+    statesByNode = new WeakMap<Element, ContainerState>();
+    // Count constructed rows without allocating bookkeeping for each leaf.
+    createdRows = 0;
     chunks: HTMLDivElement[] = [];
     widestLineColumns = 0;
+    // Templates contain structure, keys and punctuation; values are always
+    // filled as text after cloning. Limit caches for heterogeneous documents.
+    primitiveTemplates = new Map<string | null, Map<string, HTMLDivElement>>();
+    flatTemplates = new Map<string, FlatTemplate>();
+    lastFlatTemplate?: FlatTemplate;
+    keyLengths = new Map<string, number>();
+    containerTemplate: HTMLDivElement;
 
     constructor(value: JsonValue, options?: { expandedDepth?: number }) {
       this.value = value;
@@ -349,6 +406,7 @@
       this.element = createElement("div", "jf-tree");
       this.element.setAttribute("role", "tree");
       this.element.setAttribute("aria-label", "Formatted JSON");
+      this.containerTemplate = this.createContainerTemplate();
 
       const rootNode = this.createNode(value, null, 0, true);
       this.element.appendChild(rootNode);
@@ -357,7 +415,8 @@
       this.element.addEventListener("click", (event) => {
         preventSelectionNavigation(event);
         const toggle = event.target instanceof Element ? event.target.closest(".jf-toggle") : null;
-        const state = toggle ? this.statesByToggle.get(toggle) : undefined;
+        const node = toggle?.parentElement?.parentElement;
+        const state = node ? this.statesByNode.get(node) : undefined;
         if (state) {
           const expanded = !state.expanded;
           const targets = !expanded && (event.ctrlKey || event.metaKey) ? state.siblings : [state];
@@ -382,9 +441,36 @@
       });
     }
 
-    setCopyMetadata(line: HTMLElement, depth: number, text: string): void {
-      this.copyMetadata.set(line, { depth, text });
-      this.widestLineColumns = Math.max(this.widestLineColumns, text.length + depth * 4);
+    updateLineWidth(depth: number, columns: number): void {
+      this.widestLineColumns = Math.max(this.widestLineColumns, columns + depth * 4);
+    }
+
+    keyLength(key: string | null): number {
+      if (key === null) {
+        return 0;
+      }
+      let length = this.keyLengths.get(key);
+      if (length === undefined) {
+        length = JSON.stringify(key).length + 2;
+        if (this.keyLengths.size < 256) {
+          this.keyLengths.set(key, length);
+        }
+      }
+      return length;
+    }
+
+    lineMetadata(line: HTMLElement): { depth: number; text: string } {
+      // Derive selection metadata only when copying. Primitive rows already
+      // contain their exact JSON text, including any escaped link contents.
+      const parent = line.parentElement?.closest(".jf-container-node");
+      const owner = parent ? this.statesByNode.get(parent) : undefined;
+      if (owner && line === owner.line) {
+        return { depth: owner.depth, text: owner.openingText };
+      }
+      return {
+        depth: owner ? owner.depth + Number(line !== owner.closingLine) : 0,
+        text: line.textContent!
+      };
     }
 
     isVisibleLine(line: HTMLElement, boundary: HTMLElement = this.element): boolean {
@@ -436,12 +522,9 @@
         if (!this.isVisibleLine(line) || !range.intersectsNode(line)) {
           continue;
         }
-        const metadata = this.copyMetadata.get(line);
-        if (!metadata) {
-          continue;
-        }
-        const state = this.statesByLine.get(line);
-        const folded = state && !state.expanded;
+        const metadata = this.lineMetadata(line);
+        const state = line.parentElement ? this.statesByNode.get(line.parentElement) : undefined;
+        const folded = state && line === state.line && !state.expanded;
         const visibleLength = folded ? line.textContent!.length : metadata.text.length;
         const offsetInLine = (node: Node, offset: number, fallback: number): number => {
           if (!line.contains(node)) {
@@ -494,15 +577,12 @@
       event.clipboardData.setData("text/plain", formattedSelection);
     }
 
-    createKey(key: string | null): DocumentFragment {
-      const fragment = document.createDocumentFragment();
+    appendKey(line: HTMLElement, key: string | null): void {
       if (key === null) {
-        return fragment;
+        return;
       }
 
-      fragment.appendChild(createElement("span", "jf-key", JSON.stringify(key)));
-      fragment.append(": ");
-      return fragment;
+      line.append(createElement("span", "jf-key", JSON.stringify(key)), ": ");
     }
 
     createNode(
@@ -522,25 +602,66 @@
       depth: number,
       isLast: boolean
     ): HTMLDivElement {
-      const line = createElement("div", "jf-node jf-primitive-node jf-line");
-      line.setAttribute("role", "treeitem");
-      line.appendChild(this.createKey(key));
-
       const token = primitiveToken(value);
-      const element = createElement("span", `jf-value ${token.className}`, token.text);
+      const line = this.primitiveTemplate(key, token.className, isLast).cloneNode(true) as HTMLDivElement;
+      this.fillPrimitive(line, value, token, key, depth, isLast);
+      return line;
+    }
+
+    primitiveTemplate(key: string | null, className: string, isLast: boolean): HTMLDivElement {
+      let templates = this.primitiveTemplates.get(key);
+      if (!templates) {
+        templates = new Map();
+        if (this.primitiveTemplates.size < 256) {
+          this.primitiveTemplates.set(key, templates);
+        }
+      }
+      const templateKey = `${className}${isLast ? "" : ","}`;
+      let template = templates.get(templateKey);
+      if (!template) {
+        template = createElement("div", "jf-node jf-primitive-node jf-line");
+        template.setAttribute("role", "treeitem");
+        this.appendKey(template, key);
+        template.appendChild(createElement("span", `jf-value ${className}`));
+        if (!isLast) {
+          template.append(",");
+        }
+        templates.set(templateKey, template);
+      }
+      return template;
+    }
+
+    fillPrimitive(
+      line: HTMLDivElement, value: JsonPrimitive, token: PrimitiveToken,
+      key: string | null, depth: number, isLast: boolean
+    ): void {
+      const element = line.lastElementChild!;
+      element.textContent = token.text;
       const href = typeof value === "string" ? webLink(value) : undefined;
       if (href) {
         element.replaceChildren('"', createLink(token.text.slice(1, -1), href), '"');
       }
-      line.appendChild(element);
-      if (!isLast) {
-        line.append(",");
-      }
+      this.updateLineWidth(depth, this.keyLength(key) + token.text.length + Number(!isLast));
+      this.createdRows += 1;
+    }
 
-      const keyText = key === null ? "" : `${JSON.stringify(key)}: `;
-      this.setCopyMetadata(line, depth, `${keyText}${token.text}${isLast ? "" : ","}`);
-      this.nodeRows.set(line, 1);
-      return line;
+    createContainerTemplate(): HTMLDivElement {
+      const node = createElement("div", "jf-node jf-container-node");
+      node.setAttribute("role", "treeitem");
+      const line = createElement("div", "jf-line jf-container-line");
+      const toggle = createElement("button", "jf-toggle");
+      toggle.type = "button";
+      toggle.setAttribute("aria-label", "Collapse");
+      toggle.setAttribute("aria-expanded", "true");
+      toggle.title = "Collapse (Ctrl/Cmd+click to collapse siblings)";
+      line.appendChild(toggle);
+      const children = createElement("div", "jf-children");
+      children.setAttribute("role", "group");
+      children.setAttribute("aria-hidden", "false");
+      const closingLine = createElement("div", "jf-line jf-closing-line");
+      closingLine.setAttribute("aria-hidden", "false");
+      node.append(line, children, closingLine);
+      return node;
     }
 
     createContainerNode(
@@ -555,33 +676,62 @@
         return this.createEmptyContainerNode(value, key, depth, isLast);
       }
 
-      const node = createElement("div", "jf-node jf-container-node");
-      node.setAttribute("role", "treeitem");
-
-      const line = createElement("div", "jf-line jf-container-line");
-      const toggle = createElement("button", "jf-toggle");
-      toggle.type = "button";
-      toggle.setAttribute("aria-label", "Collapse");
-      line.appendChild(toggle);
-      line.appendChild(this.createKey(key));
-
+      const shouldExpand = depth < this.options.expandedDepth;
+      const tokens = shouldExpand && entries.length < 64 && entries.every((entry) => !isContainer(entry.value))
+        ? entries.map((entry) => primitiveToken(entry.value as JsonPrimitive)) : null;
       const opening = Array.isArray(value) ? "[" : "{";
       const closing = Array.isArray(value) ? "]" : "}";
-      line.append(opening);
-      const keyText = key === null ? "" : `${JSON.stringify(key)}: `;
-      this.setCopyMetadata(line, depth, `${keyText}${opening}`);
-
-      const children = createElement("div", "jf-children");
-      children.setAttribute("role", "group");
-
-      const closingLine = createElement("div", "jf-line jf-closing-line");
       const closingText = `${closing}${isLast ? "" : ","}`;
-      closingLine.textContent = closingText;
-      this.setCopyMetadata(closingLine, depth, closingText);
+      let template = this.containerTemplate;
+      if (tokens) {
+        // Consecutive records commonly share a shape. Compare it directly to
+        // avoid allocating and serializing a cache key for every record.
+        let flatTemplate = this.lastFlatTemplate;
+        let signature = "";
+        if (!flatTemplate || flatTemplate.key !== key || flatTemplate.opening !== opening ||
+            flatTemplate.isLast !== isLast || flatTemplate.keys.length !== entries.length ||
+            entries.some((entry, index) => entry.key !== flatTemplate!.keys[index] ||
+              tokens[index].className !== flatTemplate!.classes[index])) {
+          signature = JSON.stringify([key, opening, isLast,
+            entries.map((entry, index) => [entry.key, tokens[index].className])]);
+          flatTemplate = this.flatTemplates.get(signature);
+        }
+        if (!flatTemplate) {
+          const node = this.containerTemplate.cloneNode(true) as HTMLDivElement;
+          this.appendKey(node.firstElementChild as HTMLElement, key);
+          node.firstElementChild!.append(opening);
+          node.lastElementChild!.textContent = closingText;
+          const children = node.children[1];
+          entries.forEach((entry, index) => children.appendChild(
+            this.primitiveTemplate(entry.key, tokens[index].className, index === entries.length - 1).cloneNode(true)
+          ));
+          flatTemplate = {
+            node, key, opening, isLast, keys: entries.map((entry) => entry.key),
+            classes: tokens.map((token) => token.className)
+          };
+          if (this.flatTemplates.size < 128) {
+            this.flatTemplates.set(signature, flatTemplate);
+          }
+        }
+        this.lastFlatTemplate = flatTemplate;
+        template = flatTemplate.node;
+      }
+      const node = template.cloneNode(true) as HTMLDivElement;
+      const line = node.firstElementChild as HTMLDivElement;
+      const toggle = line.firstElementChild as HTMLButtonElement;
+      if (!tokens) {
+        this.appendKey(line, key);
+        line.append(opening);
+      }
+      const keyText = key === null ? "" : `${JSON.stringify(key)}: `;
+      this.updateLineWidth(depth, keyText.length + 1);
 
-      node.appendChild(line);
-      node.appendChild(children);
-      node.appendChild(closingLine);
+      const children = line.nextElementSibling as HTMLDivElement;
+      const closingLine = node.lastElementChild as HTMLDivElement;
+      if (!tokens) {
+        closingLine.textContent = closingText;
+      }
+      this.updateLineWidth(depth, closingText.length);
 
       const state = {
         value,
@@ -592,18 +742,32 @@
         closingLine,
         toggle,
         children,
-        entries,
         childrenBuilt: false,
-        expanded: false,
+        expanded: true,
+        openingText: `${keyText}${opening}`,
         closingText
       };
       this.containerStates.push(state);
       siblings.push(state);
-      this.statesByToggle.set(toggle, state);
-      this.statesByLine.set(line, state);
+      this.statesByNode.set(node, state);
 
-      const shouldExpand = depth < this.options.expandedDepth;
-      this.setExpanded(state, shouldExpand);
+      if (shouldExpand) {
+        this.createdRows += 2;
+        if (tokens) {
+          let child = children.firstElementChild as HTMLDivElement;
+          entries.forEach((entry, index) => {
+            this.fillPrimitive(child, entry.value as JsonPrimitive, tokens[index], entry.key, depth + 1,
+              index === entries.length - 1);
+            child = child.nextElementSibling as HTMLDivElement;
+          });
+          state.childrenBuilt = true;
+        } else {
+          this.buildChildren(state, entries);
+        }
+      } else {
+        this.createdRows += 1;
+        this.setExpanded(state, false);
+      }
       return node;
     }
 
@@ -615,48 +779,46 @@
     ): HTMLDivElement {
       const line = createElement("div", "jf-node jf-empty-node jf-line");
       line.setAttribute("role", "treeitem");
-      line.appendChild(this.createKey(key));
+      this.appendKey(line, key);
       const keyText = key === null ? "" : `${JSON.stringify(key)}: `;
       const emptyValue = Array.isArray(value) ? "[]" : "{}";
       line.append(`${emptyValue}${isLast ? "" : ","}`);
-      this.setCopyMetadata(line, depth, `${keyText}${emptyValue}${isLast ? "" : ","}`);
-      this.nodeRows.set(line, 1);
+      this.updateLineWidth(depth, keyText.length + 2 + Number(!isLast));
+      this.createdRows += 1;
       return line;
     }
 
-    buildChildren(state: ContainerState): void {
+    buildChildren(state: ContainerState, entries?: ContainerEntry[]): void {
       if (state.childrenBuilt) {
         return;
       }
+      entries ??= containerEntries(state.value);
 
       let chunk: HTMLDivElement | null = null;
       let chunkRows = 0;
-      let totalRows = 0;
       const siblings: ContainerState[] = [];
-      state.entries.forEach((entry, index) => {
-        if (state.entries.length >= 64 && index % 64 === 0) {
+      entries.forEach((entry, index) => {
+        if (entries.length >= 64 && index % 64 === 0) {
           chunk = createElement("div", "jf-render-chunk");
           chunk.setAttribute("role", "presentation");
           this.chunks.push(chunk);
           state.children.appendChild(chunk);
           chunkRows = 0;
         }
+        const rowsBefore = this.createdRows;
         const child = this.createNode(
           entry.value,
           entry.key,
           state.depth + 1,
-          index === state.entries.length - 1,
+          index === entries.length - 1,
           siblings
         );
         (chunk ?? state.children).appendChild(child);
-        const rows = this.nodeRows.get(child) ?? 1;
-        totalRows += rows;
-        chunkRows += rows;
-        if (chunk && (index % 64 === 63 || index === state.entries.length - 1)) {
+        chunkRows += this.createdRows - rowsBefore;
+        if (chunk && (index % 64 === 63 || index === entries.length - 1)) {
           chunk.style.containIntrinsicBlockSize = `${chunkRows * 22}px`;
         }
       });
-      this.nodeRows.set(state.node, totalRows + 2);
       state.childrenBuilt = true;
     }
 
@@ -674,9 +836,6 @@
       }
 
       state.expanded = expanded;
-      if (!expanded) {
-        this.nodeRows.set(state.node, 1);
-      }
       state.node.classList.toggle("is-collapsed", !expanded);
       state.toggle.setAttribute("aria-expanded", String(expanded));
       state.toggle.setAttribute("aria-label", expanded ? "Collapse" : "Expand");
