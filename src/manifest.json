@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "minimum_chrome_version": "114",
   "name": "JSON Formatter",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Automatically formats JSON responses and lets you format pasted JSON.",
   "icons": {
     "16": "assets/icon-16.png",
