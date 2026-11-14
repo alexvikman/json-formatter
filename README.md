@@ -14,16 +14,14 @@ Automatically format JSON responses or paste JSON into a dedicated tab. Everythi
 
 ## Installation
 
-Requires Chrome 114+, Node.js 24+, and pnpm 11.19.0.
+Requires Chrome 114 or later.
 
-```sh
-pnpm install --frozen-lockfile
-pnpm run build
-```
+1. Download the `.zip` from the [latest release](https://github.com/alexvikman/json-formatter/releases/latest) and unpack it to a folder you keep; Chrome loads the extension from there.
+2. Open `chrome://extensions` and enable **Developer mode**.
+3. Click **Load unpacked** and select the unpacked folder.
+4. Pin **JSON Formatter** to the toolbar for easy access.
 
-1. Open `chrome://extensions` and enable **Developer mode**.
-2. Click **Load unpacked** and select the generated `dist/` directory.
-3. Pin **JSON Formatter** to the toolbar for easy access.
+To update, replace the folder's contents with a newer release and reload the extension on `chrome://extensions`.
 
 For local JSON files, enable **Allow access to file URLs** in the extension's details.
 
@@ -33,32 +31,15 @@ Visit a JSON URL for automatic formatting, or click the extension button to past
 
 Hold **Ctrl** (**Cmd** on Mac) while collapsing an object or array to collapse its siblings too.
 
-## Development
+A response is formatted when it is served as JSON (`application/json`, `text/json`, or a type ending in `+json`), or as plain text that contains only JSON.
 
-Built with TypeScript, Bun, and Tailwind CSS.
+## Privacy
 
-Extension source files live in `src/`: the manifest and HTML pages, with TypeScript in `scripts/`, CSS in `styles/`, and icons in `assets/`. Build tools live in `task/` and browser tests in `tests/`.
+JSON Formatter runs on every page so that it can recognize JSON responses, which is why Chrome lists it as having access to all sites. It only acts on JSON and plain-text responses, makes no network requests, and sends nothing anywhere. The one thing it stores is your theme choice, in Chrome's synced settings.
 
-```sh
-pnpm run watch             # Rebuild on source changes
-pnpm run test              # Build and run browser tests
-pnpm run test:performance  # Benchmark the local 5 MB fixture
-```
+## For developers
 
-Reload the extension in Chrome after rebuilding. Build output is written to `dist/`, which is ignored by Git.
-
-Tests use an installed Chrome browser. Set `JF_CHROME_PATH` for a custom installation. The performance test uses the [local fixtures](tests/fixtures/README.md) and saves results to `.performance/results.json`.
-
-## Packaging
-
-```sh
-pnpm run package
-```
-
-Builds a signed `.crx` and a `.zip` in `release/`.
-The first local run creates `.keys/json-formatter.pem`; later runs reuse it.
-Back up this private key and never publish it: it preserves the extension's identity across updates.
-To use an existing key, set `JF_SIGNING_KEY_PATH` to its PEM file.
+Building from source, the tests, how the code is laid out and how releases are made: [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).
 
 ## License
 
