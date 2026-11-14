@@ -165,7 +165,10 @@
     }
     try {
       const url = new URL(value);
-      return url.protocol === "http:" || url.protocol === "https:" ? url.href : undefined;
+      // Embedded credentials can disguise the real host ("https://bank.example@evil.example/")
+      // and would be sent on click, so such values stay plain text.
+      return (url.protocol === "http:" || url.protocol === "https:") && !url.username && !url.password
+        ? url.href : undefined;
     } catch {
       return undefined;
     }

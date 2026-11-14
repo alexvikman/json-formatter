@@ -39,7 +39,7 @@ export async function verifyFormatterTab(browser: Browser, extensionRoot: string
   const manifest = JSON.parse(await readFile(join(extensionRoot, "manifest.json"), "utf8"));
   assert.equal(manifest.action.default_popup, undefined, "A popup prevents action.onClicked from firing.");
   assert.equal(manifest.background.service_worker, "scripts/background.js");
-  assert.deepEqual(manifest.permissions, ["clipboardWrite", "storage"], "Opening a tab needs no new permissions.");
+  assert.deepEqual(manifest.permissions, ["storage"], "Opening a tab needs no new permissions.");
   const workerSource = await readFile(join(extensionRoot, manifest.background.service_worker), "utf8");
   const context = await browser.newContext({ viewport: { width: 1280, height: 800 }, colorScheme: "dark" });
   await context.addInitScript(() => {

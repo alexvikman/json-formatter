@@ -153,7 +153,8 @@ export async function verifyLinks(browser: Browser, extensionRoot: string): Prom
       "file:///example.json", "chrome://settings", "mailto:person@example.test",
       "//example.test/path", "/relative", "http://", "https://[broken",
       "See https://example.test/ for details", " https://example.test/",
-      "https://example.test/path with spaces", "https://example.test/\npath"
+      "https://example.test/path with spaces", "https://example.test/\npath",
+      "https://user:secret@example.test/", "https://trusted.example@untrusted.test/login"
     ],
     "https://example.test/key": "Keys remain text",
     nested: { enabled: true, count: 42, nothing: null }

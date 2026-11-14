@@ -17,6 +17,9 @@ const value = {
 };
 const source = JSON.stringify(value);
 
+// On macOS, Ctrl+click is a secondary click and never reaches the toggle.
+const modifiers: Array<"Control" | "Meta"> = process.platform === "darwin" ? ["Meta"] : ["Control", "Meta"];
+
 function container(page: Page, key: string): Locator {
   return page.locator(".jf-tree .jf-container-node").filter({
     has: page.locator(":scope > .jf-container-line > .jf-key")
@@ -54,7 +57,7 @@ async function verifyDocument(page: Page): Promise<void> {
   await expectExpanded(toggle(page, "second"), true);
   await expectExpanded(toggle(page, "third"), true);
 
-  for (const modifier of ["Control", "Meta"] as const) {
+  for (const modifier of modifiers) {
     await expandAll.click();
     await toggle(page, "preservedChild").click();
     await toggle(page, "third").click();
@@ -97,7 +100,7 @@ async function verifyDocument(page: Page): Promise<void> {
     assert.equal(await page.locator(".is-collapsed").count(), 0);
   }
 
-  await toggle(page, "first").click({ modifiers: ["Control"] });
+  await toggle(page, "first").click({ modifiers: [modifiers[0]] });
   await page.getByRole("button", { name: "Raw", exact: true }).click();
   assert.equal(await page.locator(".jf-raw-code").textContent(), source);
   await page.getByRole("button", { name: "Tree", exact: true }).click();
@@ -122,7 +125,7 @@ async function verifyNestedChunks(page: Page): Promise<void> {
   const originalHeight = await height(outerChunks.first());
   const otherHeight = await height(outerChunks.nth(1));
   const innerToggle = innerChunks.first().locator(":scope > .jf-container-node > .jf-container-line > .jf-toggle").first();
-  await innerToggle.click({ modifiers: ["Control"] });
+  await innerToggle.click({ modifiers: [modifiers[0]] });
   assert.equal(await page.locator(".is-collapsed").count(), 65);
   assert.equal(await height(innerChunks.first()), 64 * 22);
   assert.equal(await height(innerChunks.nth(1)), 22);

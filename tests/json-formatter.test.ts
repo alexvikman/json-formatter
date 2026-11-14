@@ -16,6 +16,7 @@ const { verifyFormatterTab } = require("./formatter-tab.test");
 const { verifyAppearance } = require("./appearance.test");
 const { verifyDataIntegrity } = require("./data-integrity.test");
 const { verifyLinks } = require("./links.test");
+const { verifySecurity } = require("./security.test");
 const { verifySiblingCollapse } = require("./sibling-collapse.test");
 const { verifyPackaging } = require("./package.test");
 
@@ -77,6 +78,7 @@ async function run() {
     await verifyAppearance(browser, extensionRoot);
     await verifyDataIntegrity(browser, extensionRoot);
     await verifyLinks(browser, extensionRoot);
+    await verifySecurity(browser, extensionRoot);
     await verifySiblingCollapse(browser, extensionRoot);
     const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
     await page.addInitScript(() => {

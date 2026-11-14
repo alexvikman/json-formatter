@@ -8,7 +8,10 @@
 
   function getJsonCandidate(): string | null {
     const contentType = (document.contentType || "").toLowerCase();
-    const isJsonResponse = contentType.includes("json");
+    // Match JSON MIME types exactly (plus the legacy x-json subtype). The browser
+    // shows these, like text/plain, in its script-less text viewer; a substring
+    // match would also accept any future or markup type that merely contains "json".
+    const isJsonResponse = /^(?:application|text)\/(?:x-)?json$|^[^/]+\/[^/]+\+json$/.test(contentType);
     const isPlainText = contentType === "text/plain";
 
     if (!isJsonResponse && !isPlainText) {

@@ -12,9 +12,11 @@
     "128": "assets/icon-128.png"
   },
   "permissions": [
-    "clipboardWrite",
     "storage"
   ],
+  "content_security_policy": {
+    "extension_pages": "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
+  },
   "options_page": "options.html",
   "background": {
     "service_worker": "scripts/background.js"

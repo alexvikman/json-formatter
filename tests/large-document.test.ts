@@ -66,7 +66,7 @@ export async function verifyLargeDocument(browser: Browser, extensionRoot: strin
     assert.equal(await firstRecordToggle.getAttribute("aria-expanded"), "true");
     assert.equal(await firstChunk.evaluate((chunk) => (chunk as HTMLElement).style.containIntrinsicBlockSize), beforeHeight);
 
-    await firstRecordToggle.click({ modifiers: ["Control"] });
+    await firstRecordToggle.click({ modifiers: [process.platform === "darwin" ? "Meta" : "Control"] });
     assert.equal(await page.locator(".is-collapsed").count(), records.length,
       "Sibling collapsing must include records in every offscreen layout chunk.");
     const collapsedChunks = await page.locator(".jf-render-chunk").evaluateAll((chunks) => chunks.map((chunk) => ({
@@ -75,7 +75,7 @@ export async function verifyLargeDocument(browser: Browser, extensionRoot: strin
     })));
     assert(collapsedChunks.every((chunk) => chunk.height === chunk.records * 22));
     assert.equal(await copyWholeTree(), JSON.stringify(records, null, 2));
-    await firstRecordToggle.click({ modifiers: ["Control"] });
+    await firstRecordToggle.click({ modifiers: [process.platform === "darwin" ? "Meta" : "Control"] });
     assert.equal(await page.locator(".is-collapsed").count(), records.length - 1);
 
     await page.locator("#collapse-button").click();
