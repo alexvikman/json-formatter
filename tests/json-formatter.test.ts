@@ -48,6 +48,30 @@ async function startJsonServer(payload) {
   return server;
 }
 
+// A page can deny the Clipboard API, for example through its Permissions-Policy.
+// Copying must then fall back to copying a selection, which is captured here.
+async function copyWithDeniedClipboardApi(page, button) {
+  await page.evaluate(() => {
+    const clipboard = navigator.clipboard;
+    window.__copiedText = undefined;
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: {
+        writeText: async () => {
+          throw new DOMException("Denied", "NotAllowedError");
+        }
+      }
+    });
+    document.addEventListener("copy", (event) => {
+      window.__copiedText = (document.activeElement as HTMLTextAreaElement).value;
+      event.preventDefault(); // Never modify the user's OS clipboard from a test.
+      Object.defineProperty(navigator, "clipboard", { configurable: true, value: clipboard });
+    }, { capture: true, once: true });
+  });
+  await button.click();
+  return page.evaluate(() => window.__copiedText);
+}
+
 async function run() {
   const { chromium } = loadPlaywright();
   const projectRoot = process.cwd();
@@ -183,6 +207,12 @@ async function run() {
       await page.evaluate(() => window.__copiedText),
       JSON.stringify(JSON.parse(sample), null, 2)
     );
+    assert.equal(
+      await copyWithDeniedClipboardApi(page, page.locator("#copy-button")),
+      JSON.stringify(JSON.parse(sample), null, 2),
+      "Copying must still work when the Clipboard API is denied."
+    );
+    assert.equal(await page.locator("#copy-status").textContent(), "Formatted JSON copied");
 
     const selectedText = await page.locator("#json-result .jf-tree").evaluate((tree) => {
       const selection = window.getSelection();
@@ -375,6 +405,12 @@ async function run() {
       );
       await responsePage.getByRole("button", { name: "Copy raw", exact: true }).click();
       assert.equal(await responsePage.evaluate(() => window.__copiedText), sample);
+      assert.equal(
+        await copyWithDeniedClipboardApi(responsePage, responsePage.locator(".jf-page-primary-button")),
+        sample,
+        "Copying must still work on a page that denies the Clipboard API."
+      );
+      assert.equal(await responsePage.locator(".jf-page-status").textContent(), "Raw JSON copied");
       await responsePage.close();
     } finally {
       await new Promise<void>((resolve, reject) => {

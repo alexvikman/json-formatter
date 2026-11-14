@@ -53,8 +53,13 @@
 
   async function copyText(text: string): Promise<void> {
     if (navigator.clipboard && navigator.clipboard.writeText) {
-      await navigator.clipboard.writeText(text);
-      return;
+      try {
+        await navigator.clipboard.writeText(text);
+        return;
+      } catch (_error) {
+        // The Clipboard API can be denied, for example by a page's
+        // Permissions-Policy. Copying a selection still works after a click.
+      }
     }
 
     const textArea = document.createElement("textarea");
