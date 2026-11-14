@@ -36,7 +36,7 @@ Tests use an installed Chrome browser. Set `JF_CHROME_PATH` for a custom install
 
 ## Checks
 
-[`ci.yml`](../.github/workflows/ci.yml) runs on every push and pull request: it installs the locked dependencies, fails on known vulnerabilities of high severity or worse (`pnpm audit`), then builds, type-checks and tests.
+[`ci.yml`](../.github/workflows/ci.yml) runs on every pull request and on every push to `main`: it installs the locked dependencies, fails on known vulnerabilities of high severity or worse (`pnpm audit`), then builds, type-checks and tests.
 
 Dependencies are pinned by `pnpm-lock.yaml`. [Dependabot](../.github/dependabot.yml) proposes updates of them and of the GitHub Actions once a week, a week after a version is published; security updates are not delayed.
 
